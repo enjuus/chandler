@@ -5,6 +5,7 @@ import (
   "log"
   "path"
   "io"
+  "regexp"
   flag "github.com/ogier/pflag"
   "github.com/PuerkitoBio/goquery"
   "net/http"
@@ -12,12 +13,14 @@ import (
 )
 
 var help bool
+var name bool
 var source string
 var destination string
-var name string
+var threadName string
 
 func init() {
   flag.BoolVarP(&help, "help", "h", false, "Display this help message")
+  flag.BoolVarP(&name, "name", "n", false, "Store images in a subfolder named after the thread")
   flag.StringVarP(&source, "source", "s", "", "The thread to download [required]")
   flag.StringVarP(&destination, "destination", "d", "", "The path to save [required]")
   flag.Parse()
@@ -34,6 +37,12 @@ func GetImages() {
   document, err := goquery.NewDocumentFromReader(resp.Body)
   if err != nil {
     log.Fatal("Error loading HTTP response body.", err)
+  }
+
+    reg, _ := regexp.Compile("[^a-zA-Z0-9 ]+")
+    folder := document.Find(".board .subject:first-of-type").Text()
+  if name == true {
+    destination = destination + "/" + reg.ReplaceAllString(folder, "")
   }
 
   // find images
