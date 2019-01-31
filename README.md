@@ -37,3 +37,7 @@ for example:
 ### TODO
 
 - create thread watcher
+
+### Thanks
+
+Thank you [kori](https://github.com/kori) for making me rename this into the way funnier name.
