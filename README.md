@@ -1,13 +1,13 @@
-#chdl
+# chdl
 
 Downloader for 4chan threads.
 
-##Installing
+## Installing
 
 `go get github.com/enjuus/chdl`
 
 
-##Usage
+## Usage
 
 ```
 Usage: chdl [options]
@@ -34,6 +34,6 @@ for example:
 `chdl -s http://boards.4chan.org/wg/thread/7289180 -d "/home/user/pictures/{BOARD}/{THREAD}"`
 
 
-###TODO
+### TODO
 
 - create thread watcher
