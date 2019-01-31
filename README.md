@@ -1,16 +1,16 @@
-# chdl
+# chandler
 
 Downloader for 4chan threads.
 
 ## Installing
 
-`go get github.com/enjuus/chdl`
+`go get github.com/enjuus/chandler`
 
 
 ## Usage
 
 ```
-Usage: chdl [options]
+Usage: chandler [options]
 Options:
   -d, --destination string
         The path to save to. See README for more options. [required]
@@ -31,7 +31,7 @@ Options:
 
 for example:
 
-`chdl -s http://boards.4chan.org/wg/thread/7289180 -d "/home/user/pictures/{BOARD}/{THREAD}"`
+`chandler -s http://boards.4chan.org/wg/thread/7289180 -d "/home/user/pictures/{BOARD}/{THREAD}"`
 
 
 ### TODO
