@@ -11,23 +11,30 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"time"
 )
 
 var help bool
 var source string
 var destination string
+var watcher bool
+var verbose bool
+var interval int
 
 func init() {
 	flag.BoolVarP(&help, "help", "h", false, "Display this help message")
 	flag.StringVarP(&source, "source", "s", "", "The thread to download [required]")
 	flag.StringVarP(&destination, "destination", "d", "", "The path to save to. See README for more options. [required]")
+	flag.BoolVarP(&watcher, "watcher", "w", false, "Watch the thread for new files")
+	flag.BoolVarP(&verbose, "verbose", "v", false, "Enable output")
+	flag.IntVarP(&interval, "interval", "i", 20, "The times to check per second")
 	flag.Parse()
 }
 
 func GetImages() {
 	resp, err := http.Get(source)
 	if err != nil {
-		panic(err)
+		log.Fatal("Thread cannot be found")
 	}
 
 	defer resp.Body.Close()
@@ -42,7 +49,6 @@ func GetImages() {
 	document.Find(".board a.fileThumb").Each(func(index int, element *goquery.Selection) {
 		imgSrc, exists := element.Attr("href")
 		if exists {
-			fmt.Println(imgSrc)
 			StoreFile(imgSrc)
 		}
 	})
@@ -76,20 +82,42 @@ func StoreFile(imgSrc string) {
 
 	defer response.Body.Close()
 
-	file, _ := os.Create(destination + "/" + path.Base(imgSrc))
-	defer file.Close()
+	path := destination + "/" + path.Base(imgSrc)
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		Output("Storing new file")
+		file, _ := os.Create(path)
+		defer file.Close()
+		io.Copy(file, response.Body)
+	}
+}
 
-	io.Copy(file, response.Body)
+func doEvery(d time.Duration, f func()) {
+	for range time.Tick(d) {
+		GetImages()
+	}
+}
+
+func Output(s string) {
+	if verbose == true {
+		fmt.Println(s)
+	}
 }
 
 func main() {
 	if help == true {
 		PrintHelpMessage()
 	}
+
 	if source == "" && destination == "" {
 		PrintHelpMessage()
 	}
-	GetImages()
+	if watcher == true {
+		Output("Starting watcher")
+		GetImages()
+		doEvery(time.Duration(interval)*time.Second, GetImages)
+	} else {
+		GetImages()
+	}
 
 }
 
