@@ -21,6 +21,10 @@ var watcher bool
 var verbose bool
 var interval int
 
+var total int
+var thread string
+var board string
+
 func init() {
 	flag.BoolVarP(&help, "help", "h", false, "Display this help message")
 	flag.StringVarP(&source, "source", "s", "", "The thread to download [required]")
@@ -45,21 +49,32 @@ func GetImages() {
 	}
 
 	RenameFilePath(document)
+	Output(fmt.Sprintf("Board: /%s/", board))
+	if thread != "" {
+		Output("Thread: " + thread)
+	}
 	// find images
-	document.Find(".board a.fileThumb").Each(func(index int, element *goquery.Selection) {
+	images := document.Find(".board a.fileThumb")
+	images.Each(func(index int, element *goquery.Selection) {
+		total++
+	})
+	var i = 1
+	images.Each(func(index int, element *goquery.Selection) {
 		imgSrc, exists := element.Attr("href")
 		if exists {
-			StoreFile(imgSrc)
+			status := StoreFile(imgSrc)
+			Output(fmt.Sprintf("%s %s [%d/%d]", status, path.Base(imgSrc), i, total))
 		}
+		i++
 	})
 }
 
 func RenameFilePath(document *goquery.Document) {
 	reg, _ := regexp.Compile("[^a-zA-Z0-9 ]+")
 	parts := strings.Split(source, "/")
-	thread := reg.ReplaceAllString(document.Find(".board .subject:first-of-type").Text(), "")
+	thread = reg.ReplaceAllString(document.Find(".board .subject:first-of-type").Text(), "")
 	threadId := parts[5]
-	board := parts[3]
+	board = parts[3]
 
 	destination = strings.Replace(destination, "{BOARD}", board, -1)
 	if thread != "" {
@@ -70,7 +85,7 @@ func RenameFilePath(document *goquery.Document) {
 	destination = strings.Replace(destination, "{THREADID}", threadId, -1)
 }
 
-func StoreFile(imgSrc string) {
+func StoreFile(imgSrc string) string {
 	if _, err := os.Stat(destination); os.IsNotExist(err) {
 		os.MkdirAll(destination, os.ModePerm)
 	}
@@ -84,11 +99,12 @@ func StoreFile(imgSrc string) {
 
 	path := destination + "/" + path.Base(imgSrc)
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		Output("Storing new file")
 		file, _ := os.Create(path)
 		defer file.Close()
 		io.Copy(file, response.Body)
+		return "downloading"
 	}
+	return "skipping"
 }
 
 func doEvery(d time.Duration, f func()) {
